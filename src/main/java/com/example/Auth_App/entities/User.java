@@ -49,9 +49,11 @@ public class User {
         inverseJoinColumns = @JoinColumn(name = "role_id")) // this will be done auto
     private Set<Role> roles = new HashSet<>();
 
+
+
     @PrePersist
     protected void onCreate(){
-        Instant now = Instant.now();
+        Instant now = Instant.now(); // Creates the current timestamp It represents UTC time.
         if(createdAt == null){
             createdAt = now;
         }
