@@ -4,11 +4,14 @@ import com.example.Auth_App.dtos.UserDto;
 import com.example.Auth_App.entities.Provider;
 import com.example.Auth_App.entities.User;
 import com.example.Auth_App.exceptions.ResourceNotFoundException;
+import com.example.Auth_App.helpers.UserHelpers;
 import com.example.Auth_App.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +44,7 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public UserDto getUserEmail(String email) {
-        User  user = userRepository
+        User user = userRepository
                 .findByEmail(email).
                 orElseThrow(() ->  new ResourceNotFoundException("User Not Found with give email id"));
         return modelMapper.map(user, UserDto.class);
@@ -49,17 +52,42 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public UserDto updateUser(UserDto userDto, String userId) {
-        return null;
+        UUID uId = UserHelpers.parseUUID(userId);
+        User existingUser = userRepository.findById(uId).orElseThrow(() -> new ResourceNotFoundException("User Not Found with give id"));
+
+        if(userDto.getName() != null){
+            existingUser.setName(userDto.getName());
+        }
+        if(userDto.getProvider() != null) {
+            existingUser.setProvider(userDto.getProvider());
+        }
+
+        if(userDto.getImage() != null){
+            existingUser.setImage(userDto.getImage());
+        }
+        //  TODO: change the password update logic
+        if(userDto.getPassword() != null){
+            existingUser.setPassword(userDto.getPassword());
+        }
+
+        existingUser.setEnable(userDto.isEnable());
+
+        User updatedUser = userRepository.save(existingUser);
+        return modelMapper.map(updatedUser, UserDto.class);
     }
 
     @Override
     public void deleteUser(String userId) {
-
+        // before writing this convert string id into uuid with the UserHelper in helpers
+        UUID uId = UserHelpers.parseUUID(userId);
+        User user = userRepository.findById(uId).orElseThrow(() -> new ResourceNotFoundException("User Not Found with give id"));
+        userRepository.delete(user);
     }
 
     @Override
     public UserDto getUserById(String userId) {
-        return null;
+        User user = userRepository.findById(UserHelpers.parseUUID(userId)).orElseThrow(() -> new ResourceNotFoundException("User Not Found with give id"));
+        return modelMapper.map(user, UserDto.class);
     }
 
     @Override
