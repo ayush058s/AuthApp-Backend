@@ -1,4 +1,4 @@
-package com.example.Auth_App.services;
+package com.example.Auth_App.services.impl;
 
 import com.example.Auth_App.dtos.UserDto;
 import com.example.Auth_App.entities.Provider;
@@ -6,6 +6,7 @@ import com.example.Auth_App.entities.User;
 import com.example.Auth_App.exceptions.ResourceNotFoundException;
 import com.example.Auth_App.helpers.UserHelpers;
 import com.example.Auth_App.repositories.UserRepository;
+import com.example.Auth_App.services.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -15,7 +16,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService{
+public class UserServiceImpl implements UserService {
 
     // as we used final so it will automatically inject construct
     private final UserRepository userRepository;
