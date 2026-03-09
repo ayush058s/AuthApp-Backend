@@ -5,12 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 
 @AllArgsConstructor
@@ -21,7 +22,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "users") // if we want to name table different than class
-public class User {
+public class User  implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID) // used to autoIncrement
@@ -65,4 +66,37 @@ public class User {
         updatedAt = Instant.now();
     }
 
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+
+        return roles
+                .stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .toList();
+    }
+
+    @Override
+    public String getUsername() {
+        return this.email; // will use email to as username for login
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return this.enable;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return UserDetails.super.isEnabled();
+    }
 }

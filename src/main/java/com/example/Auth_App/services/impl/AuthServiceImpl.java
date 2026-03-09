@@ -4,6 +4,7 @@ import com.example.Auth_App.dtos.UserDto;
 import com.example.Auth_App.services.AuthService;
 import com.example.Auth_App.services.UserService;
 import lombok.AllArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 public class AuthServiceImpl implements AuthService {
 
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserDto registerUser(UserDto userDto) {
@@ -19,7 +21,8 @@ public class AuthServiceImpl implements AuthService {
         // verify email
         // verify password
         // default roles
-        UserDto userDto1 = userService.createUser(userDto);
-        return null;
+        userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
+
+        return userService.createUser(userDto);
     }
 }
