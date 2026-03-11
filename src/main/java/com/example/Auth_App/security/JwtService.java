@@ -67,21 +67,21 @@ public class JwtService {
                 .subject(user.getId().toString())
                 .issuer(issuer)
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plusSeconds(accessTtlSeconds)))
+                .expiration(Date.from(now.plusSeconds(refreshTtlSeconds)))
                 .claim("typ", "refresh")
                 .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
     }
 
-    // parse the token
+    // parse the token => When a client sends a token to your backend, the server must parse it to:
+    //Verify the token is authentic.
+    //Check it is not expired.
+    //Extract user information (like userId or email).
     public Jws<Claims> parse(String token){
-        try {
-            return Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
-        } catch (JwtException e) {
-            throw e;
-        }
+        return Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
     }
 
+    // check if token is access or refresh
     public boolean isAccessToken(String token){
         Claims c = parse(token).getPayload();
         return "access".equals(c.get("typ"));
@@ -93,8 +93,18 @@ public class JwtService {
     }
 
     // get Token id
-
     public String getJti(String token){
         return parse(token).getPayload().getId();
+    }
+
+    public List<String> getRoles(String token){
+        Claims c = parse(token).getPayload();
+        return (List<String>) c.get("roles");
+//        return List.of(c.getSubject());
+    }
+
+    public String  getEmail(String token){
+        Claims c = parse(token).getPayload();
+        return (String) c.get("email");
     }
 }
