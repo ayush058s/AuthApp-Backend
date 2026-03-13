@@ -1,6 +1,5 @@
 package com.example.Auth_App.security;
 
-import com.example.Auth_App.entities.User;
 import com.example.Auth_App.helpers.UserHelpers;
 import com.example.Auth_App.repositories.UserRepository;
 import io.jsonwebtoken.*;
@@ -9,17 +8,16 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.awt.font.GraphicAttribute;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -31,23 +29,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String header = request.getHeader("Authorization");
+        logger.info("Authorization header : {}", header);
+
         if(header != null && header.startsWith("Bearer ")){
 
             // token extract -> validate -> authentication create -> set inside security context
 
             String token = header.substring(7);
 
-            // check access token
-            if(!jwtService.isAccessToken(token)){
-                // message pass kar
-                filterChain.doFilter(request,response);
-                return;
-            }
+
             try{
+                // check access token
+                if(!jwtService.isAccessToken(token)){
+                    // message pass kar
+                    filterChain.doFilter(request,response);
+                    return;
+                }
 
                 Jws<Claims> parse = jwtService.parse(token);
                 Claims payload = parse.getPayload();
