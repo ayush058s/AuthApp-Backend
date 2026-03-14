@@ -6,7 +6,9 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -24,6 +26,13 @@ import java.util.Map;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    // it helps to customize authentication and Which rooms require authorization
+    //Which people are allowed inside
+
+    //else Spring Security enables default security:
+    // All endpoints require login
+    //Basic authentication enabled
+    //Default login page appears
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
@@ -48,10 +57,10 @@ public class SecurityConfig {
                             e.printStackTrace();
                             response.setStatus(401);
                             response.setContentType("application/json");
-                            String message = "unauthorized access " + e.getMessage();
+                            String message = "Unauthorized access " + e.getMessage();
                             Map<String, String> errorMap = Map.of(
                                     "message", message,
-                                    "stausCode", Integer.toString(401)
+                                    "statusCode", Integer.toString(401)
                             );
                             // converting message into json
                             var objectMapper = new ObjectMapper();
@@ -70,6 +79,11 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
     }
 
 //    @Bean
