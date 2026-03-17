@@ -91,6 +91,12 @@ public class JwtService {
         return "access".equals(c.get("typ"));
     }
 
+    // check if token is refresh or not
+    public boolean isRefreshToken(String token){
+        Claims c = parse(token).getPayload();
+        return "refresh".equals(c.get("typ"));
+    }
+
     public UUID getUserId(String token){
         Claims c = parse(token).getPayload();
         return UUID.fromString(c.getSubject());

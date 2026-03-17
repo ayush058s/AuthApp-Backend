@@ -2,6 +2,7 @@ package com.example.Auth_App.security;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Getter
+@Setter
 public class CookieService {
     private final String refreshTokenCookieName;
     private final boolean cookieSecure;
