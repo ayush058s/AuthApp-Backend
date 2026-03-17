@@ -5,6 +5,7 @@ import com.example.Auth_App.exceptions.ResourceNotFoundException;
 import com.example.Auth_App.repositories.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -23,6 +24,6 @@ public class CustomUserDetailService implements UserDetailsService {
 
         return userRepository
                 .findByEmail(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with the given email id"));
+                .orElseThrow(() -> new BadCredentialsException("User not found with the given email id"));
     }
 }

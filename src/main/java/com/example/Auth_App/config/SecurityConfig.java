@@ -1,11 +1,13 @@
 package com.example.Auth_App.config;
 
 
+import com.example.Auth_App.dtos.ApiError;
 import com.example.Auth_App.security.JwtAuthenticationFilter;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -17,6 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.View;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.Map;
@@ -37,7 +40,7 @@ public class SecurityConfig {
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, View error) throws Exception {
 
         http.csrf(AbstractHttpConfigurer::disable)
                         .cors(Customizer.withDefaults())
@@ -54,17 +57,23 @@ public class SecurityConfig {
                         (request, response, e) ->
                         // error message
                         {
-                            e.printStackTrace();
+//                            e.printStackTrace();
                             response.setStatus(401);
                             response.setContentType("application/json");
-                            String message = "Unauthorized access " + e.getMessage();
-                            Map<String, String> errorMap = Map.of(
-                                    "message", message,
-                                    "statusCode", Integer.toString(401)
-                            );
+                            String message =  e.getMessage();
+                            String errorr = (String) request.getAttribute("error");
+                            if(errorr != null){
+                                message = errorr;
+                            }
+//                            Map<String, String> errorMap = Map.of(
+//                                    "message", message,
+//                                    "statusCode", Integer.toString(401)
+//                            );
+
+                            var apiError = ApiError.of(HttpStatus.UNAUTHORIZED.value(), "Unauthorized access", message, request.getRequestURI());
                             // converting message into json
                             var objectMapper = new ObjectMapper();
-                            response.getWriter().write(objectMapper.writeValueAsString(errorMap));
+                            response.getWriter().write(objectMapper.writeValueAsString(apiError));
 
                         }
                         ))

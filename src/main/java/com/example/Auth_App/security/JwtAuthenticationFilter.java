@@ -1,4 +1,4 @@
-package com.example.Auth_App.security;
+ package com.example.Auth_App.security;
 
 import com.example.Auth_App.helpers.UserHelpers;
 import com.example.Auth_App.repositories.UserRepository;
@@ -82,17 +82,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 
             } catch (ExpiredJwtException e) {
-                e.printStackTrace();
-            } catch (MalformedJwtException e){
-                e.printStackTrace();
-            } catch (JwtException e){
-                e.printStackTrace();
+                request.setAttribute("error", "token expired");
+//                e.printStackTrace();
             } catch (Exception e){
-                e.printStackTrace();
+                request.setAttribute("error", "token invalid");
+//                e.printStackTrace();
             }
 
         }
 
         filterChain.doFilter(request,response); // it will forward the request
+    }
+
+    // this will disable jwt authenticate filter from login
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        return request.getRequestURI().startsWith("/api/v1/auth");
     }
 }
