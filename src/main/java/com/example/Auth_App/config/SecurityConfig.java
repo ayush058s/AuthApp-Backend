@@ -18,6 +18,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.View;
 import tools.jackson.databind.ObjectMapper;
@@ -36,8 +37,17 @@ public class SecurityConfig {
     // All endpoints require login
     //Basic authentication enabled
     //Default login page appears
-    @Autowired
+
+
+
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private AuthenticationSuccessHandler successHandler;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, AuthenticationSuccessHandler successHandler) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.successHandler = successHandler;
+    }
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, View error) throws Exception {
@@ -54,6 +64,12 @@ public class SecurityConfig {
                                         .requestMatchers("/api/v1/auth/logout").permitAll()
                                         .anyRequest().authenticated()
         )
+                .oauth2Login(oauth2 ->
+                        // create this function
+                        oauth2.successHandler(successHandler) // if user login successfully with oauth
+                                .failureHandler(null) // if login fails
+                ).logout(AbstractHttpConfigurer::disable) // as this will be handled by jwt
+
                 // this will run when any un authenticated person will try to access request
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(
                         (request, response, e) ->
