@@ -9,8 +9,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -22,7 +24,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Component
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class Oauth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final Logger logger = LoggerFactory.getLogger(Oauth2SuccessHandler.class);
@@ -31,10 +33,13 @@ public class Oauth2SuccessHandler implements AuthenticationSuccessHandler {
     private final CookieService cookieService;
     private final RefreshTokenRepository refreshTokenRepository;
 
+    @Value("${app.auth.frontend.success-redirect}")
+    private String frontEndSuccessUrl;
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        logger.info("Successful authentication");
-        logger.info(authentication.toString());
+//        logger.info("Successful authentication");
+//        logger.info(authentication.toString());
 
         OAuth2User oAuth2User = (OAuth2User)authentication.getPrincipal();// converted the principal into OAuth user
 
@@ -44,8 +49,8 @@ public class Oauth2SuccessHandler implements AuthenticationSuccessHandler {
             registrationId = token.getAuthorizedClientRegistrationId();
         }
 
-        logger.info("Registration Id: " + registrationId);
-        logger.info("user : " + oAuth2User.getAttributes().toString());
+//        logger.info("Registration Id: " + registrationId);
+//        logger.info("user : " + oAuth2User.getAttributes().toString());
 
         User user;
         switch (registrationId){
@@ -56,22 +61,43 @@ public class Oauth2SuccessHandler implements AuthenticationSuccessHandler {
                 String picture = oAuth2User.getAttributes().getOrDefault("picture", "").toString();
 
                 // build the user
-                user = User.builder()
+                User newUser = User.builder()
                         .email(email)
                         .name(name)
                         .enable(true)
                         .image(picture)
                         .provider(Provider.GOOGLE)
+                        .providerId(googleId)
                         .build();
                 // after this we will save user if not present
-                userRepository.findByEmail(email).ifPresentOrElse(user1 -> {
-                    logger.info("user is there in database");
-                    logger.info(user1.toString());
-                }, () -> {
-                    // specify - default role
-                    userRepository.save(user);
-                });
+                user = userRepository.findByEmail(email).orElseGet(() -> userRepository.save(newUser));
             }
+
+            case "github" -> {
+                String name  = oAuth2User.getAttributes().getOrDefault("login", "").toString();
+                String githubId = oAuth2User.getAttributes().getOrDefault("id", "").toString();
+                String image = oAuth2User.getAttributes().getOrDefault("avatar_url", "").toString();
+                // we are not able to fetch email
+
+                String email = (String) oAuth2User.getAttributes().get("email");
+                // therefore we will add this condition
+                if(email == null){
+                    email = name + "@github.com";
+                }
+
+                User newUser = User.builder()
+                        .email(email)
+                        .name(name)
+                        .enable(true)
+                        .image(image)
+                        .provider(Provider.GITHUB)
+                        .providerId(githubId)
+                        .build();
+
+                user = userRepository.findByEmail(email).orElseGet(() -> userRepository.save(newUser));
+
+            }
+
             default -> {
                 throw new RuntimeException("Invalid registration id");
             }
@@ -85,6 +111,8 @@ public class Oauth2SuccessHandler implements AuthenticationSuccessHandler {
 
         // create new user
         // generate token -> and redirect to frontend
+
+//        user --> refresh token unko revoke
 
         // will provide refresh token instead of access token that will itself create new access token
         String jti = UUID.randomUUID().toString();
@@ -105,7 +133,8 @@ public class Oauth2SuccessHandler implements AuthenticationSuccessHandler {
         cookieService.attachRefreshCookie(response, refreshToken, (int)jwtService.getRefreshTtlSeconds());
 
         // then we will redirect to frontend
+//        response.getWriter().write("Login successful");
+        response.sendRedirect(frontEndSuccessUrl);
 
-        response.getWriter().write("Login successful");
     }
 }

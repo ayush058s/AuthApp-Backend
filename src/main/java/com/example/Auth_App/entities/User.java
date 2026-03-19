@@ -41,6 +41,7 @@ public class User  implements UserDetails {
 
     @Enumerated(EnumType.STRING) // as it is an enum class
     private Provider provider= Provider.LOCAL;
+    private String providerId;
 
     @ManyToMany(fetch =  FetchType.EAGER) // it will define relationship with ROLE CLASS and
     // in database it will create a third table(JOIN TABLE) defining their relationship
